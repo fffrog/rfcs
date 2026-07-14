@@ -57,7 +57,7 @@ sequenceDiagram
     Note over LM: Intersect installed repos ∩ allowlist (forward_event=true)<br/>→ eligible downstream repos
 
     loop For each eligible downstream repo
-        alt L4 OR (L3 AND PR has ciflow/oot/<name> label)
+        alt L4 OR (L3 AND PR has ciflow/crcr/<name> label)
             LM->>API: Create in_progress Check Run
             API->>PT: PR Checks show "in progress"
         end
@@ -78,7 +78,7 @@ sequenceDiagram
         LM->>CH: Write to oot_ci_results table (OOT HUD page)
     end
 
-    alt L4 OR (L3 AND ciflow/oot/<name> label present)
+    alt L4 OR (L3 AND ciflow/crcr/<name> label present)
         LM->>API: Request PyTorch Installation Token (via App identity)
         API-->>LM: Token
         alt L4 (block_pr=true)
@@ -186,12 +186,12 @@ Based on these four fields, four participation levels are defined:
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `L1` | `true` | `false` | `false` | `false` | Events are forwarded to downstream, but upstream receives no downstream feedback. |
 | `L2` | `true` | `true` | `false` | `false` | Downstream results are shown on the dedicated HUD page by default. |
-| `L3` | `true` | `true` | `label_only` | `false` | Adds a non-blocking Check Run for the device in PR Checks (only triggered when the `ciflow/oot/<name>` label is added). |
+| `L3` | `true` | `true` | `label_only` | `false` | Adds a non-blocking Check Run for the device in PR Checks (only triggered when the `ciflow/crcr/<name>` label is added). |
 | `L4` | `true` | `true` | `always` | `true` | Adds a blocking Check Run for the device in PR Checks (auto-triggered for every PR); reserved for critical accelerators only. |
 
 > \[!NOTE\]
 > - Repos not listed in the allowlist YAML default to: no downstream CI triggered, no results forwarded, and no PR merges blocked.
-> - For L3, the `ciflow/oot/<name>` label permission is enforced by the existing pytorchbot mechanism in PyTorch, which already prevents unauthorized users (non-PR authors or Maintainers) from adding `ciflow/oot/<name>` labels to a PR.
+> - For L3, the `ciflow/crcr/<name>` label permission is enforced by the existing pytorchbot mechanism in PyTorch, which already prevents unauthorized users (non-PR authors or Maintainers) from adding `ciflow/crcr/<name>` labels to a PR.
 
 Level management is based on a YAML config file. Downstream repo developers who meet the requirements in the [Evolution Path](#evolution-path) section can submit a PR with supporting materials to modify this config file. Community Maintainers/TAC will review and merge it.
 
@@ -360,7 +360,7 @@ sequenceDiagram
     Note over LM: Intersect installed repos ∩ allowlist (forward_event=true)<br/>→ eligible downstream repos
 
     loop For each eligible downstream repo
-        alt L4 OR (L3 AND PR has ciflow/oot/<name> label)
+        alt L4 OR (L3 AND PR has ciflow/crcr/<name> label)
             LM->>API: Create in_progress Check Run
             API->>PT: PR Checks show "in progress"
         end
@@ -378,7 +378,7 @@ sequenceDiagram
         V->>CH: Write to oot_ci_results table (OOT HUD page)
     end
 
-    alt L4 OR (L3 AND ciflow/oot/<name> label present)
+    alt L4 OR (L3 AND ciflow/crcr/<name> label present)
         V->>API: Request PyTorch Installation Token (via App identity)
         API-->>V: Token
         alt L4 (block_pr=true)
