@@ -218,14 +218,38 @@ The allowlist is designed to naturally support gradual progression from experime
 | :--- | :--- | :--- |
 | **Onboarding** | `L1` | 1. GitHub App installed <br/> 2. Provide verifiable accelerator hardware information <br/> 3. Provide a downstream adaptation repo for the accelerator |
 | **Observation** | `L2` | 1. Follow the standard [Workflow Configuration](#workflow-configuration) to receive events and report results <br/> 2. Must not send excessive or invalid requests to the Relay Server |
-| **Stable** | `L3` | 1. CI infrastructure must keep job queue time under `X min` per workflow <br/> 2. CI infrastructure must keep total run time under `X hour` per PR <br/> 3. Weekly CI success rate > `X %` (including both infra failures and test failures) |
+| **Stable** | `L3` | See [L3 Promotion Criteria](#l3-promotion-criteria) for details. |
 | **Mature** | `L4` | Fully determined by Core Maintainer, considering factors including but not limited to: <br/> - `community adoption`, <br/> - `hardware usage`, <br/> - `test coverage` (whether the PyTorch core test suite is required, @mikaylagawarecki), <br/> - `test pass rate`, <br/> - `oncall responsiveness`, etc. |
 
 > \[!NOTE\]
-> - The requirements above are an **initial reference** and may **be adjusted over time based on real-world conditions** (e.g., determining the specific values of `X`).
+> - The requirements above are an **initial reference** and may **be adjusted over time based on real-world conditions**.
 > - To maintain the PyTorch community's user experience, **downstream repos that no longer meet the requirements of their current level will be downgraded to the level that matches their actual status.**
 > - `L3` is the recommended long-term target for most downstream repos, as it provides a good balance between signal depth and minimal negative impact on upstream.
 > - `L4`: Only applies to a small number of downstream repos. Detailed requirements will be defined before any backend approaches the `L4` bar.
+
+### L3 Promotion Criteria
+
+Downstream repositories must satisfy the following criteria before being promoted to L3. Unless otherwise specified, all metrics should be evaluated using data from the most recent **7 days**, which is available directly from the [HUD](https://hud.pytorch.org/crcr) dashboard.
+
+#### Infrastructure
+
+| Metric | Target | Description |
+| :--- | :--- | :--- |
+| Maximum execution time | < 4 h | The longest execution time of any workflow run. |
+| Average queue time | < 30 min | Average time a job waits in the queue before a runner starts it. |
+| Average timeout rate | < 10% | Percentage of workflow runs that end due to timeout. |
+
+> [!NOTE]
+> Average queue time requirements may be relaxed for hardware-constrained accelerators with approval from the PyTorch CI maintainers.
+
+#### Test Quality
+
+| Metric | Target | Description |
+| :--- | :--- | :--- |
+| Job pass rate | > 90% | At least 90% of CI jobs should succeed. This is a **job-level** metric, not a test-level metric. |
+
+> [!NOTE]
+> Downstream repositories can define and choose their own test scope.
 
 ## Downstream Repos
 
