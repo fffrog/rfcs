@@ -235,9 +235,15 @@ Downstream repositories must satisfy the following criteria before being promote
 
 | Metric | Target | Description |
 | :--- | :--- | :--- |
-| Maximum execution time | < 4 h | The longest execution time of any workflow run. |
-| Average queue time | < 30 min | Average time a job waits in the queue before a runner starts it. |
-| Average timeout rate | < 10% | Percentage of workflow runs that end due to timeout. |
+| end-to-end time | < 4.5 h | The longest wall-clock time of a single job, from webhook delivery to CI status report. |
+
+End-to-end time = queue wait + execution. The following metrics decompose it for diagnostic purposes, plus timeout rate as a reliability signal.
+
+| Metric | Target | Description |
+| :--- | :--- | :--- |
+| Max execution time | < 4 h | The longest "run" phase of any single job (excludes queue wait). |
+| Avg queue time | < 30 min | Average time a job waits before a runner picks it up (excludes execution). |
+| Timeout rate | < 1% | Percentage of jobs terminated due to timeout, measured over a 7-day window. |
 
 > [!NOTE]
 > Average queue time requirements may be relaxed for hardware-constrained accelerators with approval from the PyTorch CI maintainers.
