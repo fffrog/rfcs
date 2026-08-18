@@ -256,7 +256,7 @@ Temporary downgrade is an **operational tool** for exceptional situations (e.g.,
      - **Formal config**: synced from the `allowlist.yml` file in the PyTorch repo (Redis formal cache)
    - **The temporary cache takes priority over the formal cache**: if an unexpired override record exists for a repo in the temporary cache, it wins; otherwise the formal cache is used.
 3. **Restoration**: There are two ways to restore the original level:
-   - **Automatic**: The override record expires from the temporary cache after its default TTL (24 hours), and the repo's level automatically falls back to the formal config. The PyTorch CI Maintainer can extend the TTL while the incident persists.
+   - **Automatic**: The override record has a default TTL of 24 hours, which the PyTorch CI Maintainer can customize. Once the record expires, the repo's level automatically falls back to the formal config.
    - **Manual**: The PyTorch CI Maintainer clears the override record via the HUD admin page once the incident is resolved.
 
 ## Downstream Repos
