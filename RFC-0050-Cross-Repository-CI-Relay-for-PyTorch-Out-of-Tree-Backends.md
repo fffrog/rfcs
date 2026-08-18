@@ -227,7 +227,7 @@ The Evolution Path includes both **Promotion** and **Demotion** directions. Down
 
 ### Promotion Process
 
-1. **Prepare evidence**: The downstream repo maintainer collects supporting materials per the target level's [promotion criteria](#criteria-for-every-level) (e.g., official website, hardware info, HUD metrics screenshots).
+1. **Prepare evidence**: The downstream repo maintainer collects supporting materials per the target level's [promotion criteria](#criteria-for-every-level) (e.g., official website, HUD metrics screenshots).
 2. **Submit PR**: Submit a PR to update the [allowlist.yml](https://github.com/pytorch/pytorch/blob/main/.github/allowlist.yml) file in the PyTorch repo, with the evidence attached, requesting promotion to the target level.
 3. **Community review**: A PyTorch Maintainer reviews the PR and evaluates whether the downstream repo meets all the promotion criteria for the target level. Once approved and merged, the Relay Server automatically applies the new level's policy to that repo.
 
@@ -240,7 +240,7 @@ Demotion falls into two categories: **formal demotion** and **temporary downgrad
 Formal demotion is a permanent level reduction triggered when a downstream repo continuously fails to meet its current level's [demotion criteria](#criteria-for-every-level):
 
 1. **Collect data**: The PyTorch CI Maintainer checks HUD data against the current level's demotion thresholds to confirm whether the repo has triggered a demotion condition.
-2. **Notify downstream**: Notify the downstream repo maintainers via email or other established channels that their repo has triggered demotion, including the specific metrics and a remediation deadline (4 weeks).
+2. **Notify downstream**: Notify the downstream repo maintainers via email or other established channels that their repo has triggered demotion, including the specific metrics and a remediation deadline (2 working days).
 3. **Execute demotion**: If the repo does not recover within the deadline, the PyTorch CI Maintainer submits a PR to downgrade the repo to the level that matches its actual performance.
 4. **Re-promotion**: After fixing the root cause and meeting the promotion criteria again, a demoted repo can re-apply for promotion by following the [Promotion Process](#promotion-process).
 
@@ -248,7 +248,7 @@ Formal demotion is a permanent level reduction triggered when a downstream repo 
 
 Temporary downgrade is an **operational tool** for exceptional situations (e.g., an upstream PyTorch CI SEV, or a downstream repo causing large-scale disruption to the relay system). It must take effect **immediately** without modifying config files, and be **reversible** after the incident:
 
-1. **Admin page**: HUD provides an admin page for PyTorch CI Maintainers to perform temporary downgrade operations.
+1. **Admin page**: HUD will provides an admin page for PyTorch CI Maintainers to perform temporary downgrade operations.
 2. **Implementation**:
    - The HUD admin page writes to a dedicated **temporary Redis cache** (the override table) via a new management API.
    - When determining a downstream repo's effective level, the Relay Server consults two data sources:
@@ -256,7 +256,7 @@ Temporary downgrade is an **operational tool** for exceptional situations (e.g.,
      - **Formal config**: synced from the `allowlist.yml` file in the PyTorch repo (Redis formal cache)
    - **The temporary cache takes priority over the formal cache**: if an unexpired override record exists for a repo in the temporary cache, it wins; otherwise the formal cache is used.
 3. **Restoration**: There are two ways to restore the original level:
-   - **Automatic**: The override record expires from the temporary cache, and the repo's level automatically falls back to the formal config.
+   - **Automatic**: The override record expires from the temporary cache after its default TTL (24 hours), and the repo's level automatically falls back to the formal config. The PyTorch CI Maintainer can extend the TTL while the incident persists.
    - **Manual**: The PyTorch CI Maintainer clears the override record via the HUD admin page once the incident is resolved.
 
 ## Downstream Repos
@@ -347,8 +347,7 @@ jobs:
 L1 is the experimental onboarding phase. Requirements:
 
 1. The GitHub App must be installed.
-2. Provide verifiable accelerator hardware information.
-3. Provide a downstream adaptation repo for the accelerator.
+2. Provide a downstream adaptation repo for the accelerator.
 
 #### L1 Demotion
 
@@ -379,24 +378,24 @@ Downstream repositories must satisfy the following criteria before being promote
 1. Prerequisites
 
 - Must have been operating at **L2 for at least 1 month** before applying for L3 promotion.
-- The [HUD](https://hud.pytorch.org/crcr) must have at least 2 weeks of recent data for the downstream repo.
+- All metrics below must be met throughout the most recent **2-week** window of [HUD](https://hud.pytorch.org/crcr) data.
 
 2. Infrastructure
 
 | Metric | Target | Description |
 | :--- | :--- | :--- |
-| end-to-end time | < 4.5 h | The longest wall-clock time of a single job, from webhook delivery to CI status report. |
+| end-to-end time | < 3 h | The P50 time-to-signal (TTS), from webhook delivery to CI status report. |
 
 End-to-end time = queue wait + execution. The following metrics decompose it for diagnostic purposes, plus timeout rate as a reliability signal.
 
 | Metric | Target | Description |
 | :--- | :--- | :--- |
-| Max execution time | < 4 h | The longest "run" phase of any single job (excludes queue wait). |
+| Max execution time | < 3 h | The longest "run" phase of any single job (excludes queue wait). |
 | Avg queue time | < 30 min | Average time a job waits before a runner picks it up (excludes execution). |
-| Timeout rate | < 1% | Percentage of jobs terminated due to timeout, measured over a 7-day window. |
+| Timeout rate | < 1% | Percentage of jobs terminated due to timeout, measured over the evaluation window. |
 
 > [!NOTE]
-> Average queue time requirements may be relaxed for hardware-constrained accelerators with approval from the PyTorch CI maintainers.
+> Average queue time requirements may be relaxed for hardware-constrained accelerators with approval from the PyTorch CI maintainers. The end-to-end time requirement is not subject to relaxation.
 
 3. Test Quality
 
@@ -409,16 +408,16 @@ End-to-end time = queue wait + execution. The following metrics decompose it for
 
 #### L3 Demotion
 
-Demotion is triggered when any of the following conditions are observed over a **4 week** evaluation window:
+Demotion is triggered when any of the following conditions are observed over a **1 week** evaluation window:
 
 | Metric | Threshold | Description |
 | :--- | :--- | :--- |
 | Job pass rate | ≤ 90% | Sustained drop in CI job success rate over the evaluation window. |
 | Timeout rate | ≥ 1% | Sustained increase in job timeouts over the evaluation window. |
-| End-to-end time | > 4.5 h | The longest end-to-end job time consistently exceeds the 4.5 h target. |
+| End-to-end time | > 3 h | The P50 end-to-end time consistently exceeds the 3 h target. |
 
 > [!NOTE]
-> - A single anomalous week does not automatically trigger demotion — the evaluation window ensures sustained regression before action is taken.
+> - A one-off anomaly does not automatically trigger demotion — the metrics must breach the threshold across the evaluation window before action is taken.
 
 ### L4
 
@@ -430,7 +429,7 @@ L4 is the mature and critical phase, reserved for a small number of essential ac
 2. **Hardware usage**: the actual deployment scale of the accelerator among PyTorch users.
 3. **Test coverage**: whether the accelerator is required to run the PyTorch core test suite.
 4. **Test pass rate**: the stability of the accelerator's CI test results.
-5. **Oncall responsiveness**: how quickly the downstream team responds to and resolves CI failures.
+5. **Oncall responsiveness**: how quickly the downstream team responds to and resolves CI failures and PRs blocked on their jobs.
 6. Any other conditions the Core Maintainer deems necessary.
 
 > \[!NOTE\]
